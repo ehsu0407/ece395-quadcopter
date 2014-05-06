@@ -97,3 +97,15 @@ void SetControllerDirection(pid_t* pid, int Direction)
 {
 		controllerDirection = Direction;
 }
+
+float getMotorSpeed(pid_t* pid) {
+		float motorSpeed;
+		motorSpeed = pid->Output / PID_MAX_OUT;
+		if(motorSpeed < -1) {
+				motorSpeed = -1;
+		} else if(motorSpeed > 1) {
+				motorSpeed = 1;
+		}
+		
+		return motorSpeed;
+}

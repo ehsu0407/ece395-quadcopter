@@ -58,17 +58,17 @@ int set_motor(int motorNum, float motorSpeed) {
 		dutyCycle = ((MOTOR_MAX_SPEED - MOTOR_MIN_SPEED) * motorSpeed) + MOTOR_MIN_SPEED;
 	
 		switch(motorNum) {
-			case MOTOR_BOTTOM_RIGHT:			// Set the bottom right motor assigned to port 0_8
-				LPC_TMR16B0->MR0 = dutyCycle;
-				return 1;
-			case MOTOR_BOTTOM_LEFT:			// Set the bottom left motor assigned to port 0_9
+			case MOTOR_BOTTOM_RIGHT:			// Set the bottom right motor assigned to port 0_9
 				LPC_TMR16B0->MR1 = dutyCycle;
 				return 1;
-			case MOTOR_TOP_LEFT:			// Set the top left motor assigned to port 1_7
+			case MOTOR_BOTTOM_LEFT:			// Set the bottom left motor assigned to port 1_7
 				LPC_TMR32B0->MR1 = dutyCycle;
 				return 1;
-			case MOTOR_TOP_RIGHT:			// Set the top right motor assigned to port 1_6
+			case MOTOR_TOP_LEFT:			// Set the top left motor assigned to port 1_6
 				LPC_TMR32B0->MR0 = dutyCycle;
+				return 1;
+			case MOTOR_TOP_RIGHT:			// Set the top right motor assigned to port 0_8
+				LPC_TMR16B0->MR0 = dutyCycle;
 				return 1;
 			default:		// Invalid motor number, return -1
 				return -1;

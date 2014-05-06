@@ -19,39 +19,19 @@ main.c
 #include "pid.h"
 #include "motors.h"
 
-/* Various PID constants. Change as needed */
-#define PID_ROLL_P 0.1
-#define PID_ROLL_I 0.1
-#define PID_ROLL_D 0.1
-
-#define PID_PITCH_P 0.1
-#define PID_PITCH_I 0.1
-#define PID_PITCH_D 0.1
-
-#define PID_YAW_P 0.1
-#define PID_YAW_I 0.1
-#define PID_YAW_D 0.1
-
-#define PID_X_P 0.1
-#define PID_X_I 0.1
-#define PID_X_D 0.1
-
-#define PID_Y_P 0.1
-#define PID_Y_I 0.1
-#define PID_Y_D 0.1
-
-#define PID_Z_P 0.1
-#define PID_Z_I 0.1
-#define PID_Z_D 0.1
-
-#define PID_MAX_OUT 100000.0
-#define PID_MIN_OUT -100000.0
+#define TEST_THRUST_COEFF 0.5
 
 /* angle variables */
 float acc_angle_x, acc_angle_y, acc_angle_z;
 float acc_x, acc_y, acc_z, gyro_x, gyro_y, gyro_z;
 float kal_roll_angle, kal_pitch_angle, kal_yaw_angle;
+
+/* pid vars */
 float pid_roll_output, pid_pitch_output, pid_yaw_output;
+
+/* motor speeds */
+float motor_speed_1, motor_speed_2, motor_speed_3, motor_speed_4;
+float motor_speed_pitch, motor_speed_roll, motor_speed_yaw;
 
 /* time variables. all are in seconds */
 float dt, now, startTime, lastReadTime, lastBlinkTime;	
@@ -167,16 +147,21 @@ int main()
 	
 	delay32Ms(1, 1000);  //Give the PID's a second to get started
 	
+	/* Initalize Motors */
+	
 	/* Set up timer */
 	i = 0; 		
-	init_timer32(0, 48); //us
-	enable_timer32(0);
+	init_timer32(1, 48); //us
+	enable_timer32(1);
 	startTime = (float)read_timer32(0) / 1000000;
 	lastReadTime = startTime;
 	lastBlinkTime = startTime;
 	
 	/* TEST - Set motor 1's speed to 0.2 */
-	set_motor(1, 0.2);
+	//set_motor(1, 1);
+	//set_motor(2, 1);
+	//set_motor(3, 1);
+	//set_motor(4, 1);
 	
 	while (1)
 	{
@@ -194,7 +179,7 @@ int main()
 		acc_angle_z = atan2(acc_x , acc_y) * 180/3.14159265358979323;
 		
 		/* Calculate dt */
-		now = (float)read_timer32(0) / 1000000;
+		now = (float)read_timer32(1) / 1000000;
 		dt = now - lastReadTime;
 		lastReadTime = now;
 		
@@ -217,6 +202,55 @@ int main()
 		pid_roll_output = pid_roll.Output;
 		pid_pitch_output = pid_pitch.Output;
 		pid_yaw_output = pid_yaw.Output;
+		
+		/* Get the new motor speeds */
+		motor_speed_roll = getMotorSpeed(&pid_roll);
+		motor_speed_pitch = getMotorSpeed(&pid_pitch);
+		motor_speed_yaw = getMotorSpeed(&pid_yaw);
+		
+		motor_speed_1 = TEST_THRUST_COEFF;
+		motor_speed_2 = TEST_THRUST_COEFF;
+		motor_speed_3 = TEST_THRUST_COEFF;
+		motor_speed_4 = TEST_THRUST_COEFF;
+		
+		// Pitch control
+		motor_speed_1 += (0.5 * motor_speed_pitch);
+		motor_speed_2 -= (0.5 * motor_speed_pitch);
+		motor_speed_3 -= (0.5 * motor_speed_pitch);
+		motor_speed_4 += (0.5 * motor_speed_pitch);
+		
+		// Roll control
+		motor_speed_1 -= (0.5 * motor_speed_roll);
+		motor_speed_2 -= (0.5 * motor_speed_roll);
+		motor_speed_3 += (0.5 * motor_speed_roll);
+		motor_speed_4 += (0.5 * motor_speed_roll);
+		
+		if(motor_speed_1 > 1) {
+				motor_speed_1 = 1;
+		} else if(motor_speed_1 < 0) {
+				motor_speed_1 = 0;
+		}
+		if(motor_speed_2 > 1) {
+				motor_speed_2 = 1;
+		} else if(motor_speed_2 < 0) {
+				motor_speed_2 = 0;
+		}
+		if(motor_speed_3 > 1) {
+				motor_speed_3 = 1;
+		} else if(motor_speed_3 < 0) {
+				motor_speed_3 = 0;
+		}
+		if(motor_speed_4 > 1) {
+				motor_speed_4 = 1;
+		} else if(motor_speed_4 < 0) {
+				motor_speed_4 = 0;
+		}
+		
+		/* Set all the motors */
+		set_motor(1, motor_speed_1);
+		set_motor(2, motor_speed_2);
+		set_motor(3, motor_speed_3);
+		set_motor(4, motor_speed_4);
 		
 		/* Blink the led to show its working! */
 		if(now - lastBlinkTime > 1) {

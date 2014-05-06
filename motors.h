@@ -6,7 +6,7 @@
  *
  *	Diagram of motor assignment:
  *
- * 	(3)		   Front     (4)
+ * 	(4)		   Front     (1)
  * 	   *              *
  * 	     *          *
  * 	       *      *
@@ -16,7 +16,7 @@
  * 	       *      *
  * 	     *          *
  * 	   *              *
- * 	(2)      Back      (1)
+ * 	(3)      Back      (2)
  */
 
 #ifndef MOTORS_H
@@ -26,10 +26,10 @@
 #define MOTOR_MAX_SPEED 228
 #define MOTOR_PWM_PERIOD 1520
 
-#define MOTOR_BOTTOM_RIGHT 1
-#define MOTOR_BOTTOM_LEFT 2
-#define MOTOR_TOP_LEFT 3
-#define MOTOR_TOP_RIGHT 4
+#define MOTOR_TOP_RIGHT 1
+#define MOTOR_BOTTOM_RIGHT 2
+#define MOTOR_BOTTOM_LEFT 3
+#define MOTOR_TOP_LEFT 4
 
 /* Motor initalization function */
 extern void motors_init(void);
