@@ -1,0 +1,9 @@
+.\motors.o: motors.c
+.\motors.o: C:\Keil\ARM\ARMCC\bin\..\include\stdio.h
+.\motors.o: C:\Keil\ARM\Inc\NXP\LPC11xx\LPC11xx.h
+.\motors.o: C:\Keil\ARM\CMSIS\Include\core_cm0.h
+.\motors.o: C:\Keil\ARM\ARMCC\bin\..\include\stdint.h
+.\motors.o: C:\Keil\ARM\CMSIS\Include\core_cmInstr.h
+.\motors.o: C:\Keil\ARM\CMSIS\Include\core_cmFunc.h
+.\motors.o: C:\Keil\ARM\Inc\NXP\LPC11xx\system_LPC11xx.h
+.\motors.o: motors.h
