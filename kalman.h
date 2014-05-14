@@ -1,3 +1,12 @@
+/*
+ * kalman.h
+ * Header file for a kalman filter implementation
+ *
+ * Original code from http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it
+ * Modified by Eddie Hsu
+ * ECE 395, Spring 2014
+ */
+
 #ifndef _Kalman_h
 #define _Kalman_h
 

@@ -1,11 +1,11 @@
 /*
-ECE 395 Quadcopter
-main.c
+	ECE 395 Quadcopter
+	main.c
+
+	Eddie Hsu - ECE 395, Spring 2014
 */
 
 #include "driver_config.h"
-#include "ssp.h"
-#include "cpu_lpc1000.h"
 #include "uart.h"
 #include "mpu.h"
 #include "kalman.h"
@@ -19,7 +19,14 @@ main.c
 #include "pid.h"
 #include "motors.h"
 
-#define TEST_THRUST_COEFF 0.5
+#define MIN_THRUST_COEFF 0.3
+
+/* Throttle control defines */
+#define RAISE_THROTTLE (LPC_GPIO1->DATA & (1<<4))
+#define LOWER_THROTTLE (LPC_GPIO1->DATA & (1<<5))
+#define thrAdjDelay 0.05
+#define MIN_THROTTLE 0
+#define MAX_THROTTLE 0.6
 
 /* angle variables */
 float acc_angle_x, acc_angle_y, acc_angle_z;
@@ -34,14 +41,18 @@ float motor_speed_1, motor_speed_2, motor_speed_3, motor_speed_4;
 float motor_speed_pitch, motor_speed_roll, motor_speed_yaw;
 
 /* time variables. all are in seconds */
-float dt, now, startTime, lastReadTime, lastBlinkTime;	
+float dt, now, startTime, lastReadTime, lastBlinkTime, lastThrAdjTime;	
 
 /* kalman filters for each axis */
 kalman_t kal_roll, kal_pitch, kal_yaw;
 
-/* 6 pids, one to stabilize roll pitch and yaw and one to stabilize movement */
+/* 6 pids, one to stabilize roll pitch and yaw and one to stabilize movement in x, y, and z */
 pid_t pid_roll, pid_pitch, pid_yaw;
 pid_t pid_x, pid_y, pid_z;
+
+/* throttle vars */
+float user_throttle = 0;
+float lastThrAdjTime;
 
 int i;
 float max_acc = 0;
@@ -57,6 +68,9 @@ void configureGPIO()
     LPC_GPIO0->DIR |= (1<<7);
 		//set port 1_4 to input
 		LPC_GPIO1->DIR &= ~(1<<4);
+		//set port 1_5 to input
+		LPC_GPIO1->DIR &= ~(1<<5);
+	
 
 }
 
@@ -147,8 +161,6 @@ int main()
 	
 	delay32Ms(1, 1000);  //Give the PID's a second to get started
 	
-	/* Initalize Motors */
-	
 	/* Set up timer */
 	i = 0; 		
 	init_timer32(1, 48); //us
@@ -156,6 +168,7 @@ int main()
 	startTime = (float)read_timer32(0) / 1000000;
 	lastReadTime = startTime;
 	lastBlinkTime = startTime;
+	lastThrAdjTime = startTime;
 	
 	/* TEST - Set motor 1's speed to 0.2 */
 	//set_motor(1, 1);
@@ -208,10 +221,10 @@ int main()
 		motor_speed_pitch = getMotorSpeed(&pid_pitch);
 		motor_speed_yaw = getMotorSpeed(&pid_yaw);
 		
-		motor_speed_1 = TEST_THRUST_COEFF;
-		motor_speed_2 = TEST_THRUST_COEFF;
-		motor_speed_3 = TEST_THRUST_COEFF;
-		motor_speed_4 = TEST_THRUST_COEFF;
+		motor_speed_1 = 0;
+		motor_speed_2 = 0;
+		motor_speed_3 = 0;
+		motor_speed_4 = 0;
 		
 		// Pitch control
 		motor_speed_1 += (0.5 * motor_speed_pitch);
@@ -225,25 +238,39 @@ int main()
 		motor_speed_3 += (0.5 * motor_speed_roll);
 		motor_speed_4 += (0.5 * motor_speed_roll);
 		
+		// User throttle
+		motor_speed_1 += user_throttle;
+		motor_speed_2 += user_throttle;
+		motor_speed_3 += user_throttle;
+		motor_speed_4 += user_throttle;
+		
 		if(motor_speed_1 > 1) {
 				motor_speed_1 = 1;
-		} else if(motor_speed_1 < 0) {
-				motor_speed_1 = 0;
+		} else if(motor_speed_1 < MIN_THRUST_COEFF) {
+				motor_speed_1 = MIN_THRUST_COEFF;
 		}
 		if(motor_speed_2 > 1) {
 				motor_speed_2 = 1;
-		} else if(motor_speed_2 < 0) {
-				motor_speed_2 = 0;
+		} else if(motor_speed_2 < MIN_THRUST_COEFF) {
+				motor_speed_2 = MIN_THRUST_COEFF;
 		}
 		if(motor_speed_3 > 1) {
 				motor_speed_3 = 1;
-		} else if(motor_speed_3 < 0) {
-				motor_speed_3 = 0;
+		} else if(motor_speed_3 < MIN_THRUST_COEFF) {
+				motor_speed_3 = MIN_THRUST_COEFF;
 		}
 		if(motor_speed_4 > 1) {
 				motor_speed_4 = 1;
-		} else if(motor_speed_4 < 0) {
-				motor_speed_4 = 0;
+		} else if(motor_speed_4 < MIN_THRUST_COEFF) {
+				motor_speed_4 = MIN_THRUST_COEFF;
+		}
+		
+		/* Check if no thrust is applied. If this is the case, stop the motors */
+		if(user_throttle < 0.01) {
+			motor_speed_1 = 0;
+			motor_speed_2 = 0;
+			motor_speed_3 = 0;
+			motor_speed_4 = 0;
 		}
 		
 		/* Set all the motors */
@@ -253,9 +280,28 @@ int main()
 		set_motor(4, motor_speed_4);
 		
 		/* Blink the led to show its working! */
-		if(now - lastBlinkTime > 1) {
-				toggleLed();
-				lastBlinkTime = now;
+//		if(now - lastBlinkTime > 1) {
+//				toggleLed();
+//				lastBlinkTime = now;
+//		}
+		if(RAISE_THROTTLE) {
+			if(now - lastThrAdjTime > thrAdjDelay) {
+				ledOn();
+				if(user_throttle < MAX_THROTTLE) {
+					user_throttle += 0.01;
+				}
+				lastThrAdjTime = now;
+			}
+		}
+		
+		if(LOWER_THROTTLE) {
+			if(now - lastThrAdjTime > thrAdjDelay) {
+				ledOff();
+				if(user_throttle > MIN_THROTTLE) {
+					user_throttle -= 0.01;
+				}
+				lastThrAdjTime = now;
+			}
 		}
 	}
 }

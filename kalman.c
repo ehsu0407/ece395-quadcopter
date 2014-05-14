@@ -1,3 +1,12 @@
+/*
+ * kalman.c
+ * C code to kalman filter gyroscopic and accelerometer values
+ *
+ * Original code from http://blog.tkjelectronics.dk/2012/09/a-practical-approach-to-kalman-filter-and-how-to-implement-it
+ * Modified by Eddie Hsu
+ * ECE 395, Spring 2014
+ */
+
 #include "kalman.h"
 
 void kalman_init(kalman_t* filter){
@@ -15,7 +24,6 @@ void kalman_init(kalman_t* filter){
     filter->P[0][1] = 0;
     filter->P[1][0] = 0;
     filter->P[1][1] = 0;
-
 }
 
 float kalman_update(kalman_t* filter, float newAngle, float newRate, float dt){

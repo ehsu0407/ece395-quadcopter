@@ -1,3 +1,11 @@
+/* 
+ * pid.c
+ * C code for a PID implementation for a quadcopter
+ *
+ * Eddie Hsu, Spring 2014
+ *
+ */
+
 #include "pid.h"
  
 int controllerDirection = DIRECT;
@@ -6,7 +14,7 @@ void pid_compute(pid_t* pid, float timeNow)
 {
 		float error, dInput, elapsedTime;
 	
-		/* Don't do anything if we're not in automatic mode */
+		// Return if in auto mode
 		if(!pid->inAuto) return;
 	
 		elapsedTime = timeNow - pid->lastTime;
@@ -77,7 +85,7 @@ void SetMode(pid_t* pid, int Mode)
 {
     int newAuto = (Mode == AUTOMATIC);
     if(newAuto == !pid->inAuto)
-    {  /*we just went from manual to auto*/
+    {
         pid_init(pid);
     }
     pid->inAuto = newAuto;
